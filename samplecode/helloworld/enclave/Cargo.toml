@@ -31,3 +31,10 @@ default = []
 [target.'cfg(not(target_vendor = "teaclave"))'.dependencies]
 sgx_types = { path = "../../../sgx_types" }
 sgx_tstd = { path = "../../../sgx_tstd" }
+
+[dependencies]
+wasmer = { version = "2.2.1", default-features = false, features = ["sys-default", "universal", "cranelift"] }
+anyhow = "1.0"
+
+# v0.9.8 has issues with the 1.61.0-nightly (ea2a21c 2022-02-15) compiler
+crossbeam-epoch = "=0.9.7"

@@ -87,6 +87,12 @@ macro_rules! is_x86_feature_detected {
     ("bmi") => {
         $crate::feature::check_for($crate::feature::Feature::bmi)
     };
+    ("bmi1") => {
+        $crate::feature::check_for($crate::feature::Feature::bmi)
+    };
+    ("bmi2") => {
+        false
+    };
     ("lzcnt") => {
         $crate::feature::check_for($crate::feature::Feature::lzcnt)
     };
