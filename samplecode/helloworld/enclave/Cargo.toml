@@ -10,6 +10,9 @@ crate-type = ["staticlib"]
 [features]
 default = []
 
+[dependencies]
+wasm3 = { git = "https://github.com/scrtlabs/wasm3-rs", branch = "warnings-patch", features = ["build-bindgen"]}
+
 [target.'cfg(not(target_env = "sgx"))'.dependencies]
 sgx_types = { git = "https://github.com/apache/teaclave-sgx-sdk.git" }
 sgx_tstd = { git = "https://github.com/apache/teaclave-sgx-sdk.git" }

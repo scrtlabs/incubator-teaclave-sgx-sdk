@@ -17,7 +17,6 @@
 
 #![crate_name = "helloworldsampleenclave"]
 #![crate_type = "staticlib"]
-
 #![cfg_attr(not(target_env = "sgx"), no_std)]
 #![cfg_attr(target_env = "sgx", feature(rustc_private))]
 
@@ -26,11 +25,40 @@ extern crate sgx_types;
 #[macro_use]
 extern crate sgx_tstd as std;
 use sgx_types::*;
+use std::io::{self, Write};
+use std::slice;
 use std::string::String;
 use std::vec::Vec;
-use std::slice;
-use std::io::{self, Write};
 
+extern crate wasm3;
+use wasm3::Environment;
+use wasm3::Module;
+
+const MILLIS: u64 = 500_000;
+
+fn wasm3() {
+    let env = Environment::new().expect("Unable to create environment");
+    let rt = env
+        .create_runtime(1024 * 60)
+        .expect("Unable to create runtime");
+    let module = Module::parse(&env, &include_bytes!("./wasm_millis_to_seconds.wasm")[..])
+        .expect("Unable to parse module");
+
+    let mut module = rt.load_module(module).expect("Unable to load module");
+    module
+        .link_function::<(), u64>("time", "millis", millis_wrap)
+        .expect("Unable to link function");
+    let func = module
+        .find_function::<(), u64>("seconds")
+        .expect("Unable to find function");
+    println!("{}ms in seconds is {:?}s.", MILLIS, func.call());
+    assert_eq!(func.call(), Ok(MILLIS / 1000));
+}
+
+wasm3::make_func_wrapper!(millis_wrap: millis() -> u64);
+fn millis() -> u64 {
+    MILLIS
+}
 /// A function simply invokes ocall print to print the incoming string
 ///
 /// # Parameters
@@ -48,16 +76,15 @@ use std::io::{self, Write};
 /// Always returns SGX_SUCCESS
 #[no_mangle]
 pub extern "C" fn say_something(some_string: *const u8, some_len: usize) -> sgx_status_t {
-
     let str_slice = unsafe { slice::from_raw_parts(some_string, some_len) };
     let _ = io::stdout().write(str_slice);
 
     // A sample &'static string
     let rust_raw_string = "This is a ";
     // An array
-    let word:[u8;4] = [82, 117, 115, 116];
+    let word: [u8; 4] = [82, 117, 115, 116];
     // An vector
-    let word_vec:Vec<u8> = vec![32, 115, 116, 114, 105, 110, 103, 33];
+    let word_vec: Vec<u8> = vec![32, 115, 116, 114, 105, 110, 103, 33];
 
     // Construct a string from &'static string
     let mut hello_string = String::from(rust_raw_string);
@@ -68,11 +95,12 @@ pub extern "C" fn say_something(some_string: *const u8, some_len: usize) -> sgx_
     }
 
     // Rust style convertion
-    hello_string += String::from_utf8(word_vec).expect("Invalid UTF-8")
-                                               .as_str();
+    hello_string += String::from_utf8(word_vec).expect("Invalid UTF-8").as_str();
 
     // Ocall to normal world for output
     println!("{}", &hello_string);
+
+    wasm3();
 
     sgx_status_t::SGX_SUCCESS
 }
