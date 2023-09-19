@@ -22,7 +22,9 @@ use crate::path::Path;
 use crate::sys_common::FromInner;
 use sgx_libc as libc;
 use sgx_tprotected_fs::{self, SgxFileStream};
-use sgx_types::{sgx_align_key_128bit_t, sgx_key_128bit_t, sgx_status_t};
+use sgx_types::{
+    sgx_align_key_128bit_t, sgx_fopen_auto_key, sgx_key_128bit_t, sgx_status_t, SysResult, SGX_FILE,
+};
 
 pub struct SgxFile(SgxFileStream);
 
@@ -81,9 +83,13 @@ impl OpenOptions {
 
 impl SgxFile {
     pub fn open(path: &Path, opts: &OpenOptions) -> io::Result<SgxFile> {
+        println!("DEBUG in SgxFile::open: one");
         let path = cstr(path)?;
+        println!("DEBUG in SgxFile::open: two");
         let mode = opts.get_access_mode()?;
+        println!("DEBUG in SgxFile::open: three");
         let opts = CString::new(mode.as_bytes())?;
+        println!("DEBUG in SgxFile::open: four");
         SgxFile::open_c(&path, &opts, None, true, None)
     }
 
@@ -114,10 +120,30 @@ impl SgxFile {
         cache_size: Option<u64>,
     ) -> io::Result<SgxFile> {
         let file = if cache_size.is_some() {
+            println!("DEBUG in SgxFile::open_c: calling open_ex");
             SgxFileStream::open_ex(path, opts, key, cache_size.unwrap())
         } else if auto == true || key.is_none() {
-            SgxFileStream::open_auto_key(path, opts)
+            println!("DEBUG in SgxFile::open_c: calling open_auto_key");
+
+            unsafe fn rsgx_fopen_auto_key(filename: &CStr, mode: &CStr) -> SysResult<SGX_FILE> {
+                println!("DEBUG in rsgx_fopen_auto_key: one");
+                let file = sgx_fopen_auto_key(filename.as_ptr(), mode.as_ptr());
+                if file.is_null() {
+                    println!("DEBUG in rsgx_fopen_auto_key: file was null");
+                    use sgx_trts::error::errno;
+                    Err(errno())
+                } else {
+                    Ok(file)
+                }
+            }
+
+            fn open_auto_key(filename: &CStr, mode: &CStr) -> SysResult<SgxFileStream> {
+                unsafe { rsgx_fopen_auto_key(filename, mode).map(|f| SgxFileStream { stream: f }) }
+            }
+
+            open_auto_key(path, opts)
         } else {
+            println!("DEBUG in SgxFile::open_c: calling open");
             SgxFileStream::open(path, opts, key.unwrap())
         };
 

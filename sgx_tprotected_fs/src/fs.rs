@@ -216,7 +216,7 @@ unsafe fn rsgx_fimport_auto_key(filename: &CStr, key: &sgx_key_128bit_t) -> SysE
 }
 
 pub struct SgxFileStream {
-    stream: SGX_FILE,
+    pub stream: SGX_FILE,
 }
 
 impl SgxFileStream {

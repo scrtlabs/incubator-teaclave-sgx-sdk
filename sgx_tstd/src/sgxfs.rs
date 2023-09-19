@@ -106,7 +106,9 @@ impl SgxFile {
     /// Other errors may also be returned according to [`OpenOptions::open`].
     ///
     pub fn open<P: AsRef<Path>>(path: P) -> io::Result<SgxFile> {
-        OpenOptions::new().read(true).open(path.as_ref())
+        let open = OpenOptions::new().read(true).open(path.as_ref());
+        println!("DEBUG in SgxFile::open: {:?}", open.as_ref().err());
+        open
     }
 
     /// Opens a file in write-only mode.
