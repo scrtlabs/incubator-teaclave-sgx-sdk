@@ -1,11 +1,11 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt update && apt install -y unzip lsb-release debhelper cmake reprepro autoconf automake bison build-essential curl dpkg-dev expect flex gcc-12 gdb git git-core gnupg kmod libboost-system-dev libboost-thread-dev libcurl4-openssl-dev libiptcdata0-dev libjsoncpp-dev liblog4cpp5-dev libprotobuf-dev libssl-dev libtool libxml2-dev ocaml ocamlbuild pkg-config protobuf-compiler python3 texinfo uuid-dev vim wget software-properties-common && \
     rm -rf /var/lib/apt/lists/*
 
-ENV BINUTILS_DIST="ubuntu22.04"
+ENV BINUTILS_DIST="ubuntu24.04"
 #ENV BINUTILS_DIST="SELF_BUILT"
 ENV LD_LIBRARY_PATH=/usr/lib:/usr/local/lib
 ENV LD_RUN_PATH=/usr/lib:/usr/local/lib
@@ -14,16 +14,16 @@ COPY 02_binutils.sh /root
 RUN bash /root/02_binutils.sh
 
 ENV SDK_DIST="INTEL_BUILT"
-ENV SDK_URL="https://download.01.org/intel-sgx/sgx-linux/2.25/distro/ubuntu22.04-server/sgx_linux_x64_sdk_2.25.100.3.bin"
+ENV SDK_URL="https://download.01.org/intel-sgx/sgx-linux/2.25/distro/ubuntu24.04-server/sgx_linux_x64_sdk_2.25.100.3.bin"
 #ENV SDK_DIST="SELF_BUILT"
 COPY 03_sdk.sh /root
 RUN bash /root/03_sdk.sh
     
 # Sixth, PSW
 
-ENV CODENAME        jammy
-ENV VERSION         2.25.100.3-jammy1
-ENV DCAP_VERSION    1.22.100.3-jammy1
+ENV CODENAME        noble
+ENV VERSION         2.25.100.3-noble1
+ENV DCAP_VERSION    1.22.100.3-noble1
 
 COPY 04_psw.sh /root
 RUN bash /root/04_psw.sh

@@ -1,4 +1,4 @@
-if [ $BINUTILS_DIST == "ubuntu22.04" ]
+if [ $BINUTILS_DIST == "ubuntu22.04" ] || [ $BINUTILS_DIST == "ubuntu24.04" ]
 then
     apt-get update && \
     apt-get install -y binutils && \
